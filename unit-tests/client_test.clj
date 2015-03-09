@@ -9,9 +9,8 @@
   (expect true @result))
 
 ;; Calling emit should trigger multiple handlers for the given topic.
-(let [[result1 result2 result3] (repeatedly 3 promise)]
-  (handle :topic #(deliver result1 true))
-  (handle :topic #(deliver result2 true))
-  (handle :topic #(deliver result3 true))
+(let [results (repeatedly 3 promise)]
+  (doseq [result results]
+    (handle :topic #(deliver result true)))
   (emit! :topic)
-  (expect true (and @result1 @result2 @result3)))
+  (expect true (every? true? (map deref results))))
