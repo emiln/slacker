@@ -11,6 +11,7 @@
 
 (def ^:private publisher (chan))
 (def ^:private publication (pub publisher first))
+(def ^:private connection (atom nil))
 
 (defn emit!
   "Emits an event to handlers. It will find all handlers registered for the
@@ -32,41 +33,37 @@
         (apply handler-fn msg)
         (recur)))))
 
-(defn client!
-  "Connects to the given websocket URL and returns the open socket. The client
-  will registers a handler to make sending messages to the Slack server more
-  convenient:
-
-  (emit! :slacker.client/send-message some-string) will be picked up by the
-  client (notice the namespaced keyword) and some-string will be sent with all
-  of :channel, :id, :text, and :type set. Which channel? #srsbsns on Dongers
-  Inc. This is awaiting a future expansion of the API."
-  [url]
-  (let [socket (connect
-                 url
-                 :on-receive
-                 (fn [raw]
-                   (emit! ::receive-message (read-str raw :key-fn keyword))))]
-    ;; Handle ::send-message events by sending them to the Slack server.
-    (handle ::send-message
-      (fn [msg]
-        (send-msg socket (string->slack-json msg))))
-    ;; Handle ::receive-message events by publishing them with :type as topic.
-    (handle ::receive-message
-      (fn [msg]
-        (let [topic (cond (:type msg)     (:type msg)
-                          (:reply_to msg) "reply"
-                          :else           "unknown")]
-          (go (>! publisher [(string->keyword topic) msg])))))
-    socket))
-
-(defn login!
-  "Connects to Slack given a token and returns the socket connection."
-  [token]
-  (-> (format "https://slack.com/api/rtm.start?token=%s" token)
+;; Handle ::connection-open events by connecting.
+(handle ::connection-open
+  (fn [token]
+    (emit! ::connection-bind
+      (-> (format "https://slack.com/api/rtm.start?token=%s" token)
         (http/get)
         (deref)
         (:body)
-        (read-str :key-fn keyword)
-        (:url)
-        (client!)))
+        (read-str :key-fn string->keyword)
+        (:url)))))
+
+;; Handle ::connection-bind by actually binding the websocket.
+(handle ::connection-bind
+  (fn [url]
+    (let [socket (connect url
+                   :on-receive
+                   (fn [raw]
+                     (emit! ::receive-message
+                       (read-str raw :key-fn string->keyword))))]
+      (reset! connection socket)
+      (emit! ::connection-bound socket))))
+
+;; Handle ::send-message events by sending them to the Slack server.
+(handle ::send-message
+  (fn [msg]
+    (send-msg @connection (string->slack-json msg))))
+
+;; Handle ::receive-message events by publishing them with :type as topic.
+(handle ::receive-message
+  (fn [msg]
+    (let [topic (cond (:type msg)     (:type msg)
+                      (:reply_to msg) "reply"
+                      :else           "unknown")]
+      (go (>! publisher [(string->keyword topic) msg])))))
