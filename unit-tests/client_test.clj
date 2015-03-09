@@ -14,3 +14,11 @@
     (handle :topic #(deliver result true)))
   (emit! :topic)
   (expect true (every? true? (map deref results))))
+
+;; Calling emit should correctly pass additional arguments to the handler.
+(let [result (promise)
+      object (Object.)]
+  (handle :with-arguments
+    (fn [a b c] (deliver result [a b c])))
+  (emit! :with-arguments "string" 12345 object)
+  (expect ["string" 12345 object] @result))
