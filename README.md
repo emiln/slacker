@@ -2,6 +2,8 @@
 
 > A basic Slack bot library revolving around an `emit!`/`handle` flow.
 
+[ ![Codeship Status for emiln/slacker](https://codeship.com/projects/e060f4e0-a88d-0132-8121-06eff5d60a17/status?branch=master)](https://codeship.com/projects/67401)
+
 ## Getting started
 
 Here's a simple namespace that will launch a working bot (barring the token):
