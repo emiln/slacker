@@ -9,9 +9,9 @@
 Here's a simple namespace that will launch a working bot (barring the token):
 ```clojure
 (ns my-bot.core
-  (:require [slacker.client :refer [emit! handle login!]]))
+  (:require [slacker.client :refer [emit! handle]]))
 
-(def raw-socket (login! "my-super-secret-bot-token"))
+(emit! :slacker.client/connection-open "my-token")
 
 (handle :message
   (fn [{:keys [text]}]
@@ -22,15 +22,8 @@ Here's a simple namespace that will launch a working bot (barring the token):
           (clojure.string/join " "))))))
 ```
 
-There are really only three concepts you must familiarize yourself with in this
+There are really only two concepts you must familiarize yourself with in this
 working example:
-
-### `login!`
-
-For the `login!` token you should simply create a bot on Slack and use the
-token created in the process. Note that several running instances of your bot
-can use the same token if you're trying to minimize the number of bots in your
-channels.
 
 ### `emit!`
 
