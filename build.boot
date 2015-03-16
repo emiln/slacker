@@ -22,3 +22,13 @@
       (use 'client-test 'converters-test)
       (exp/run-all-tests)
       identity)))
+
+(deftask local-install
+  "Builds a jar of this project and place it in your local m2 repo."
+  []
+  (comp
+   (aot :namespace '#{slacker.client slacker.converters})
+   (pom :project 'slacker
+        :version "0.1.0")
+   (jar)
+   (install)))
