@@ -1,7 +1,7 @@
 (ns slacker.converters
   (:require
     [clojure.data.json :refer [write-str]]
-    [clojure.string :refer [lower-case replace]]))
+    [clojure.string :as s]))
 
 (def ^:private counter (atom 0))
 
@@ -10,8 +10,8 @@
   casing and underscore->dash conversion."
   [string]
   (-> (or string "unknown")
-    (lower-case)
-    (replace #"_" "-")
+    (s/lower-case)
+    (s/replace #"_" "-")
     (keyword)))
 
 (defn string->slack-json
