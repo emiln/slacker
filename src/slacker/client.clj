@@ -86,6 +86,7 @@
 
 
 (handle ::send-message
-  "Sends a message to the currently open websocket."
-  (fn [msg]
-    (send-msg @connection (string->slack-json msg))))
+  "Sends a message to the currently open websocket. Takes a channel ID and a
+  message in the form of a string."
+  (fn [receiver msg]
+    (send-msg @connection (string->slack-json receiver msg))))
