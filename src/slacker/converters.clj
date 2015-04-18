@@ -21,14 +21,13 @@
   :type    - One of the event types defined in the Slack API. Defaults to
              'message'.
 
-  :channel - The channel ID to send to; not the channel name. Defaults to the
-             '#srsbsns' channel ID on Dongers Inc.
+  :channel - The channel ID to send to; not the channel name.
 
   :id      - A unique (for this session) integer. Default should be fine."
-  [message & args]
+  [channel message & args]
   (->> args
     (apply hash-map)
-    (merge {:channel "C03RGK7FC"
+    (merge {:channel channel
             :id (swap! counter inc)
             :text message
             :type "message"})

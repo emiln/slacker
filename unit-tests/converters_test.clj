@@ -33,9 +33,9 @@
          "id" 1,
          "text" "test",
          "type" "message"}
-  (read-str (string->slack-json "test" :id 1)))
+  (read-str (string->slack-json "C03RGK7FC" "test" :id 1)))
 
 ;; It should assign unique ids for two consecutive messages.
-(let [id1 (-> "test" (string->slack-json) (read-str) (get "id"))
-      id2 (-> "test" (string->slack-json) (read-str) (get "id"))]
+(let [id1 (-> (string->slack-json "C03RGK7FC" "test") (read-str) (get "id"))
+      id2 (-> (string->slack-json "C03RGK7FC" "test") (read-str) (get "id"))]
   (expect (not= id1 id2)))
