@@ -166,14 +166,14 @@ channel.
 
 To respond to a message we'll need to emit an event called
 `slacker.client/send-message`, which will need a receiver (a channel for our
-example) and message. The channels is a string in a specific format, and the
+example) and message. The channel is a string in a specific format, and the
 message is simply any string. We'll extract the special channel string from the
-message we'll be responding to.
+message we'll be responding to along with the actual text of the message.
 
 ```clojure
 (defn reprimand-profanity
   "Responds to profanity by calling out the offender in the channel."
-  [{:keys [channel user text]}]
+  [{:keys [channel text]}]
   (when (triggered? text)
     (slacker.client/emit!
       :slacker.client/send-message
