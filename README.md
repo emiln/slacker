@@ -178,7 +178,7 @@ message we'll be responding to.
     (slacker.client/emit!
       :slacker.client/send-message
       channel
-      "Please don't use offensive words.")))
+      "Don't use offensive words!")))
 ```
 
 The last step is to register `reprimand-profanity` as a handler for general
@@ -188,3 +188,39 @@ The last step is to register `reprimand-profanity` as a handler for general
 
 That's it. The bot will now respond to profane utterances with a simple, static
 reprimand.
+
+Here is the full code, written in a proper namespace, reordered slightly, and
+with use of `require`, all ready to paste into a file and save.
+
+```clojure
+(ns mybot.core
+  (:require [clojure.string :refer [lower-case]]
+            [slacker.client :refer [emit! handle]]))
+
+(defn profane-word?
+  "Returns a non-nil value if the word is at odds with our essential software
+  freedoms."
+  [word]
+  (#{"microsoft" "windows" "proprietary" "visual studio" "non-free"}
+  ·(lower-case word)))
+
+(defn split-into-words
+  "Splits any string into more palatable words."
+  [sentence]
+  (re-seq #"(?i)[a-z\-]+]" sentence))
+
+(defn triggered?
+  "Returns a non-nil value if the sentence triggers us, demanding a response."
+  [sentence]
+  (some profane-word? (split-into-words sentence)))
+
+(defn reprimand-profanity
+  "Responds to profanity by calling out the offender in the channel."
+  [{:keys [channel text]}]
+  (when (triggered? text)
+    (emit! :slacker.client/send-message channel "Don't use offensive words!")))
+
+(handle :message reprimand-profanity)
+
+(emit! :slacker.client/connect-bot "my-secret-bot-token")
+```
