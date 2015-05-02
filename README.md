@@ -202,12 +202,12 @@ with use of `require`, all ready to paste into a file and save.
   freedoms."
   [word]
   (#{"microsoft" "windows" "proprietary" "visual studio" "non-free"}
-  ·(lower-case word)))
+   (lower-case word)))
 
 (defn split-into-words
   "Splits any string into more palatable words."
   [sentence]
-  (re-seq #"(?i)[a-z\-]+]" sentence))
+  (re-seq #"(?i)[a-z\-]+" sentence))
 
 (defn triggered?
   "Returns a non-nil value if the sentence triggers us, demanding a response."
