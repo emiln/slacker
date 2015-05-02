@@ -140,7 +140,7 @@ software freedoms-inpired outlook on life.
 ```
 
 With this difficult groundwork laid, we're ready to connect to Slack and start
-cleansing channels of profanity. We'll need to find the approprite
+cleansing channels of profanity. We'll need to find the appropriate
 [Slack event](https://api.slack.com/events) to respond to, which will simply be
 `:message` for this example. Note that all Slack events are converted to
 Clojure keywords using `slacker.converters/string->keyword`. Our task is
