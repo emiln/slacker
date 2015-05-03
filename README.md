@@ -114,7 +114,7 @@ hosting the README is intended to be profanity-free.
   "Returns a non-nil value if the word is at odds with our essential software
   freedoms."
   [word]
-  (#{"microsoft" "windows" "proprietary" "visual studio" "non-free"}
+  (#{"microsoft" "windows" "proprietary" "non-free" "copyright"}
    (clojure.string/lower-case word)))
 ```
 
@@ -144,7 +144,7 @@ cleansing channels of profanity. We'll need to find the appropriate
 [Slack event](https://api.slack.com/events) to respond to, which will simply be
 `:message` for this example. Note that all Slack events are converted to
 Clojure keywords using `slacker.converters/string->keyword`. Our task is
-two-fold:
+two-fold:https://github.com/emiln/slacker/blob/5-better-readme/README.md
 
 ### Connect to Slack
 
@@ -201,7 +201,7 @@ with use of `require`, all ready to paste into a file and save.
   "Returns a non-nil value if the word is at odds with our essential software
   freedoms."
   [word]
-  (#{"microsoft" "windows" "proprietary" "visual studio" "non-free"}
+  (#{"microsoft" "windows" "proprietary" "non-free" "copyright"}
    (lower-case word)))
 
 (defn split-into-words
@@ -223,4 +223,132 @@ with use of `require`, all ready to paste into a file and save.
 (handle :message reprimand-profanity)
 
 (emit! :slacker.client/connect-bot "my-secret-bot-token")
+```
+
+## A slightly more complex example
+
+Having successfully created a bot that responds with static responses to certain
+words, it's time to address how you can handle state in a completely
+asynchronous library like this. In this example we'll add moods to the bot,
+making it grow angrier if people keep ignoring its reprimands, happier if people
+use words from the free software movement, and slowly return to a neutral mood
+if no triggers are seen for a while.
+
+To get started we'll store the mood state in an atom as a simple integer. We'll
+keep a mood for each user, as our advanced bot wants to respond justly and not
+conflate its opinion about the different users in a channel. We'll use a map
+from user id string to mood integer.
+
+```clojure
+(def moods
+  "Our attitudes towards the various users on the network."
+  (atom {}))
+```
+
+Zero will be our neutral bot mood, and we can `swap!` it with `inc` or `dec` to
+alter it. It feels intuitive to let positive numbers correspond to positive
+moods. As it seems unlikely we'll exert the effort required to author more than
+a few specific phrases for the bot, we'll create a few helper functions to let
+us increase and decrease the atom, but within specific bounds.
+
+```clojure
+(defn mood-dec
+  "Decreases the mood, but does not let it drop below -3."
+  [moods user]
+  (update-in moods [user] #(max -3 (dec (or % 0)))))
+
+(defn mood-inc
+  "Increases the mood, but does not let it rise above 3."
+  [moods user]
+  (update-in moods [user] #(min 3 (inc (or % 0)))))
+```
+
+We should also create a mapping from mood to string. We'll make use of `format`
+to insert the name of the offender for a more personal response, so the strings
+returned here should make use of `%s` to refer to the offender if necessary.
+
+```clojure
+(defn mood-string
+  "Takes an integer representing a mood and returns a string with our response
+  to the mentioning of proprietary software, taking into consideration our mood.
+  This string is intended to be used with `format` and have passed as argument
+  a formatted user id."
+  [mood]
+  (get {-3 "SHUT THE FUCK UP ABOUT YOUR SHIT-WARE %s I'LL KILL YOU"
+        -2 "Shut it about your proprietary malware already, %s."
+        -1 "I told you not to talk about that, %s."
+         0 "Don't talk about proprietary software, %s. It triggers me."
+         1 "Please don't mention proprietary software, %s."
+         2 "I'd like to change the topic from proprietary software, %s."
+         3 "I'm sorry, %s, but I'm not keen on proprietary software."}
+    mood "I don't know how to feel about that, %s."))
+```
+
+With this intricate mood system in place, we're ready to dive into some details
+about Slack. When you receive a `:message`, you can extract its `:user` value,
+which will be an id in the form of a string. If you wrap this id in "<@" and
+">", slack will translate that into the user name and highlight it, which is
+precisely what we want for this bot. We'll add a simple helper function for just
+that task.
+
+```clojure
+(defn format-user-id
+  "Formats a user id for proper rendering in Slack."
+  [id]
+  (str "<@" id ">"))
+```
+
+We've got most of the plumbing in place now, but there's one issue we haven't
+really addressed. We probably don't want to respond to our own messages
+including the word "proprietary" by writing another message including the word
+"proprietary". You probably see the problem with this. How do we address this?
+We'll simply use a black list of user ids who do not warrant a reprimand.
+Slacker provides a very basic function to look up users on the network.
+
+```clojure
+(def trusted-user?
+  "Returns true if we trust the user id to discuss proprietary software. This
+  currently amounts to the user being specifically our bot."
+  (let [me (->> (slacker.lookups/users "our-secret-bot-token")
+             (filter #(= (:name %) "mybot"))
+             (first)
+             (:id))]
+    (partial = me)))
+```
+
+We're now ready to write some handlers. The first one will reprimand and then
+decrease our mood.
+
+```clojure
+(defn reprimand-profanity
+  [{:keys [channel user text]}]
+  (when (and (not (trusted-user? user))
+             (triggered? text))
+    (let [mood (get @moods user 0)
+          mood-string (mood-string mood)
+          user-string (format-user-id user)
+          message (format mood-string user-string)]
+      (emit! :slacker.client/send-message channel message)
+      (swap! moods mood-dec user))))
+```
+
+The next one will increase our mood (but remain silent) when the GPL is
+mentioned.
+
+```clojure
+(defn happy-message?
+  [message]
+  (re-find #"GPL" message))
+
+(defn make-happy
+  [{:keys [user text]}]
+  (when (happy-message? text)
+    (swap! moods mood-inc user)))
+```
+
+Let's register both of them.
+
+```clojure
+(handle :message reprimand-profanity)
+(handle :message make-happy)
 ```
