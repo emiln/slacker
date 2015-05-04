@@ -26,7 +26,7 @@ Is anyone listening? You don't know. If they shout back and you happen to be
 listening, you might reason that they did. It seems prudent to be up-front about
 this:
 
-> Emitted events are fully asynchronous and anoymouse, emitted in a different
+> Emitted events are fully asynchronous and anonymous, emitted in a different
 > thread pool, and without call-backs. You just don't know who emitted them or
 > if anyone is receiving them.
 
