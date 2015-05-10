@@ -321,6 +321,7 @@ decrease our mood.
 
 ```clojure
 (defn reprimand-profanity
+  "Responds to profanity by calling out the offender in the channel."
   [{:keys [channel user text]}]
   (when (and (not (trusted-user? user))
              (triggered? text))
@@ -337,10 +338,12 @@ mentioned.
 
 ```clojure
 (defn happy-message?
+  "Returns truthy is we're pleased by this message."
   [message]
   (re-find #"GPL" message))
 
 (defn make-happy
+  "Ensure our opinion of a user is raised if we're pleased with their message."
   [{:keys [user text]}]
   (when (happy-message? text)
     (swap! moods mood-inc user)))
@@ -352,3 +355,138 @@ Let's register both of them.
 (handle :message reprimand-profanity)
 (handle :message make-happy)
 ```
+
+We're now keeping track of our disposition towards the various users in the
+channels we monitor. Here is the code wrapped up in a namespace for convenience:
+
+```clojure
+(ns mybot.core
+  (:require [clojure.string :refer [lower-case]]
+            [slacker.client :refer [emit! handle]]
+            [slacker.lookups :refer [users]]))
+
+(def moods
+  "Our attitudes towards the various users on the network."
+  (atom {}))
+
+(defn mood-dec
+  "Decreases the mood, but does not let it drop below -3."
+  [moods user]
+  (update-in moods [user] #(max -3 (dec (or % 0)))))
+
+(defn mood-inc
+  "Increases the mood, but does not let it rise above 3."
+  [moods user]
+  (update-in moods [user] #(min 3 (inc (or % 0)))))
+
+(defn profane-word?
+  "Returns a non-nil value if the word is at odds with our essential software
+  freedoms."
+  [word]
+  (#{"microsoft" "windows" "proprietary" "non-free" "copyright"}
+   (lower-case word)))
+
+(defn split-into-words
+  "Splits any string into more palatable words."
+  [sentence]
+  (re-seq #"(?i)[a-z\-]+" sentence))
+
+(defn triggered?
+  "Returns a non-nil value if the sentence triggers us, demanding a response."
+  [sentence]
+  (some profane-word? (split-into-words sentence)))
+
+(defn mood-string
+  "Takes an integer representing a mood and returns a string with our response
+  to the mentioning of proprietary software, taking into consideration our mood.
+  This string is intended to be used with `format` and have passed as argument
+  a formatted user id."
+  [mood]
+  (get {-3 "SHUT THE FUCK UP ABOUT YOUR SHIT-WARE %s I'LL KILL YOU"
+        -2 "Shut it about your proprietary malware already, %s."
+        -1 "I told you not to talk about that, %s."
+         0 "Don't talk about proprietary software, %s. It triggers me."
+         1 "Please don't mention proprietary software, %s."
+         2 "I'd like to change the topic from proprietary software, %s."
+         3 "I'm sorry, %s, but I'm not keen on proprietary software."}
+    mood "I don't know how to feel about that, %s."))
+
+(defn format-user-id
+  "Formats a user id for proper rendering in Slack."
+  [id]
+  (str "<@" id ">"))
+
+(def trusted-user?
+  "Returns true if we trust the user id to discuss proprietary software. This
+  currently amounts to the user being specifically our bot."
+  (let [me (->> (users "our-secret-bot-token")
+             (filter #(= (:name %) "mybot"))
+             (first)
+             (:id))]
+    (partial = me)))
+
+(defn reprimand-profanity
+  "Responds to profanity by calling out the offender in the channel."
+  [{:keys [channel user text]}]
+  (when (and (not (trusted-user? user))
+             (triggered? text))
+    (let [mood (get @moods user 0)
+          mood-string (mood-string mood)
+          user-string (format-user-id user)
+          message (format mood-string user-string)]
+      (emit! :slacker.client/send-message channel message)
+      (swap! moods mood-dec user))))
+
+(defn happy-message?
+  "Returns truthy is we're pleased by this message."
+  [message]
+  (re-find #"GPL" message))
+
+(defn make-happy
+  "Ensure our opinion of a user is raised if we're pleased with their message."
+  [{:keys [user text]}]
+  (when (happy-message? text)
+    (swap! moods mood-inc user)))
+
+(handle :message reprimand-profanity)
+(handle :message make-happy)
+
+(emit! :slacker.client/connect-bot "my-secret-bot-token")
+```
+
+I hope this has convinced you that it is possible to write bots of at least
+intermediate complexity with Slacker. If you think you're missing essential
+tools, be sure to raise an issue about it.
+
+## List of Slacker events
+
+Events emitted by Slacker itself are always Clojure keywords and follow a
+simple naming convention.
+
+### Calls to action
+
+A call to action generally takes the form "imperative verb"-"noun" like in
+`:connect-bot`. These signal an expectation that someone will respond to the
+event, and that this is necessary for the emission to be successfully completed.
+
+All current calls to action in Slacker:
+
+Name | Arguments | Description
+-- | -- | --
+`:slacker.client/connect-bot` | `token` | Connects the Slack bot to the network using the token.
+`:slacker.client/connect-websocket` | `token`, `url` | Opens a websocket client to the given url with the Slack bot token.
+`:slacker.client/receive-message` | `message` | Parses the raw Slack message, emitting a new event with under a topic fitting for the message type.
+`:slacker.client/send-message` | `receiver message` | Sends message, a string, to the receiver, which should be an ID for a channel, group or user.
+
+### Notifications
+
+A notification doesn't remand further action and instead signals that a
+processing of some kind has completed. These generally take the form
+"noun"-"past tense verb" like `:bot-connected`.
+
+All current notifications in Slacker:
+
+Name | Arguments | Description
+-- | -- | --
+`:slacker.client/websocket-connected` | `url`, `socket` | Logs the URL that was successfully connected to and the open websocket.
+`:slacker.client/bot-connected` | `token` | Logs the token that was successfully connected to.
