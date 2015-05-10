@@ -6,6 +6,19 @@
               [client :refer [emit! handle]]
               [converters :refer [string->keyword]]]))
 
+(def token (atom nil))
+
+(defn- refresh-cache
+  [cache]
+  (when-let [token @token]
+    (future
+      (memo/memo-clear! cache [token]
+      (cache token)))))
+
+;; +--------------------------------------------------------------------------+
+;; | Channels                                                                 |
+;; +--------------------------------------------------------------------------+
+
 (defn- lookup-channels
   "Fetches and parses all the channels visible from the given token and returns
   them as a sequence of keywordized Clojure maps. This operation performs an
@@ -21,23 +34,43 @@
     (:channels)))
 
 (def channels (memo/memo lookup-channels))
-(def tokens (atom #{}))
 
-(defn refresh-cache
-  [& _]
-  (doseq [token @tokens]
-    (future
-      (memo/memo-clear! channels [token])
-      (channels token))))
+(def refresh-channels
+  (refresh-cache channels))
+
+;; +--------------------------------------------------------------------------+
+;; | Users                                                                    |
+;; +--------------------------------------------------------------------------+
+
+(defn- lookup-users
+  "Fetches and parses all the users visible from the given token and returns
+  them as a sequence of keywordized Clojure maps. This operation performs an
+  HTTPS request and is as such very slow. It should never be used directly,
+  which is why it is private. Use the memoized `users` instead, which will
+  be kept fresh by sensible cache evictions."
+  [token]
+  (-> (http/get "https://slack.com/api/users.list"
+        {:query-params {:token token}})
+    (deref)
+    (:body)
+    (read-str :key-fn string->keyword)
+    (:members)))
+
+(def users (memo/memo lookup-users))
+
+(def refresh-users
+  (refresh-cache users))
 
 ;; +--------------------------------------------------------------------------+
 ;; | Populate/refresh                                                         |
 ;; +--------------------------------------------------------------------------+
 
-(handle :channel-created refresh-cache)
-(handle :channel-deleted refresh-cache)
-(handle :channel-rename refresh-cache)
-(handle :slacker.client/bot-connected refresh-cache)
+(handle :channel-created refresh-channels)
+(handle :channel-deleted refresh-channels)
+(handle :channel-rename refresh-channels)
+(handle :user-change refresh-users)
+(handle :team-join refresh-users)
+(handle :slacker.client/bot-connected #(do (refresh-channels) (refresh-users)))
 
 (handle :slacker.client/connect-bot
-  (partial swap! tokens conj))
+  (partial reset! token conj))
