@@ -472,11 +472,11 @@ event, and that this is necessary for the emission to be successfully completed.
 All current calls to action in Slacker:
 
 Name | Arguments | Description
--- | -- | --
+--- | --- | ---
 `:slacker.client/connect-bot` | `token` | Connects the Slack bot to the network using the token.
 `:slacker.client/connect-websocket` | `token`, `url` | Opens a websocket client to the given url with the Slack bot token.
 `:slacker.client/receive-message` | `message` | Parses the raw Slack message, emitting a new event with under a topic fitting for the message type.
-`:slacker.client/send-message` | `receiver message` | Sends message, a string, to the receiver, which should be an ID for a channel, group or user.
+`:slacker.client/send-message` | `receiver`, `message` | Sends message, a string, to the receiver, which should be an ID for a channel, group or user.
 
 ### Notifications
 
@@ -487,6 +487,6 @@ processing of some kind has completed. These generally take the form
 All current notifications in Slacker:
 
 Name | Arguments | Description
--- | -- | --
+--- | --- | ---
 `:slacker.client/websocket-connected` | `url`, `socket` | Logs the URL that was successfully connected to and the open websocket.
 `:slacker.client/bot-connected` | `token` | Logs the token that was successfully connected to.
