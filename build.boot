@@ -28,7 +28,7 @@
   []
   (comp
    (aot :namespace '#{slacker.client slacker.converters})
-   (pom :project 'slacker
-        :version "0.1.0")
+   (pom :project 'emiln/slacker
+        :version "1.0.0")
    (jar)
    (install)))
