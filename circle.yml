@@ -11,7 +11,7 @@ dependencies:
   pre:
     - wget -O boot "https://github.com/boot-clj/boot/releases/download/${BOOT_VERSION}/boot.sh"
     - chmod a+x boot
-    - mv boot /usr/bin/boot
+    - mv boot /home/ubuntu/bin
 
 ## Run the Slacker tests
 test:
