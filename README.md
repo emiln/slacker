@@ -2,7 +2,7 @@
 
 > An enthusiastically asynchronous Slack bot library.
 
-[ ![Codeship Status for emiln/slacker](https://codeship.com/projects/e060f4e0-a88d-0132-8121-06eff5d60a17/status?branch=master)](https://codeship.com/projects/67401)
+[ ![Circle CI status for emiln/slacker](https://circleci.com/gh/emiln/slacker/tree/master.svg?style=badge)](https://circleci.com/gh/emiln/slacker)
 
 ## Introduction
 
