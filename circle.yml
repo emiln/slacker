@@ -16,7 +16,7 @@ dependencies:
   override:
     - boot checkout
   cache_directories:
-    - ".m2"
+    - "~/.m2"
 
 ## Run the Slacker tests
 test:
