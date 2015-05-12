@@ -17,4 +17,4 @@ dependencies:
 ## Run the Slacker tests
 test:
   override:
-    - ~/boot/boot slacker-test
+    - "BOOT_VERSION=${BOOT_VERSION} BOOT_CLOJURE_VERSION=${BOOT_CLOJURE_VERSION} ~/boot/boot slacker-test"
