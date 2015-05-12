@@ -1,0 +1,24 @@
+## Customize the test machine
+machine:
+
+  # Pin the Boot and Clojure version
+  environment:
+    BOOT_CLOJURE_VERSION: 1.6.0
+    BOOT_VERSION: 2.0.0-rc14
+    JAVA_OPTS: -XXMaxPermSize=256m
+
+## Download and install Boot
+dependencies:
+  pre:
+    - wget -O boot "https://github.com/boot-clj/boot/releases/download/${BOOT_VERSION}/boot.sh"
+    - chmod a+x boot
+    - mv boot /home/ubuntu/bin
+  override:
+    - boot checkout
+  cache_directories:
+    - "~/.m2"
+
+## Run the Slacker tests
+test:
+  override:
+    - "boot slacker-test"
