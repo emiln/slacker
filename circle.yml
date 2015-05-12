@@ -11,6 +11,7 @@ dependencies:
   pre:
     - wget "https://github.com/boot-clj/boot/releases/download/${BOOT_VERSION}/boot.sh"
     - chmod u+x boot.sh
+    - export PATH=$PATH:.
 
 ## Run the Slacker tests
 test:
