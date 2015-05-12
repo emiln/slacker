@@ -5,7 +5,7 @@ machine:
   environment:
     BOOT_CLOJURE_VERSION: 1.6.0
     BOOT_VERSION: 2.0.0-rc14
-    JAVA_OPTS: "-Xms256m -Xmx512m -XX:MaxPermSize=512m"
+    JAVA_OPTS: -XXMaxPermSize=256m
 
 ## Download and install Boot
 dependencies:
@@ -13,6 +13,10 @@ dependencies:
     - wget -O boot "https://github.com/boot-clj/boot/releases/download/${BOOT_VERSION}/boot.sh"
     - chmod a+x boot
     - mv boot /home/ubuntu/bin
+  override:
+    - boot checkout
+  cache_directories:
+    - ".m2"
 
 ## Run the Slacker tests
 test:
