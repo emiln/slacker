@@ -4,7 +4,7 @@
   (:require
     [clojure.core.async :refer [<! >! chan go go-loop pub sub]]
     [clojure.data.json :refer [read-str]]
-    [clojure.string :refer [lower-case replace]]
+    [clojure.string :refer [lower-case]]
     [org.httpkit.client :as http]
     [gniazdo.core :refer [connect send-msg]]
     [slacker.converters :refer [string->keyword string->slack-json]]))

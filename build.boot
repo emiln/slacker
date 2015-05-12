@@ -1,34 +1,22 @@
 (set-env!
   :source-paths #{"src"}
   :dependencies
-  '[[expectations "2.0.9"]
+  '[[adzerk/boot-test "1.0.4" :scope "test"]
     [http-kit "2.1.16"]
     [org.clojure/core.async "0.1.346.0-17112a-alpha"]
     [org.clojure/data.json "0.2.5"]
     [stylefruits/gniazdo "0.3.1"]])
 
-;; Poor solution. Expectations are loaded for absolutely everything, which
-;; isn't the intention.
-;; TODO: figure how to properly load expectations only in the test task.
-(require '[expectations :as exp])
-(exp/disable-run-on-shutdown)
+(task-options!
+  pom {:project 'emiln/slacker
+       :version "1.0.0"
+       :description "An enthusiastically asynchronous Slack bot library."
+       :url "https://github.com/emiln/slacker"
+       :scm {:url "https://github.com/emiln/slacker"}})
 
-;; Much like above. This isn't really a good approach to testing. Help wanted!
-(deftask test
+(deftask slacker-test
+  "Run the unit tests for Slacker in a pod."
   []
-  (fn middleware [next-handler]
-    (fn handler [fileset]
-      (set-env! :source-paths #(conj % "unit-tests"))
-      (use 'client-test 'converters-test)
-      (exp/run-all-tests)
-      identity)))
-
-(deftask local-install
-  "Builds a jar of this project and place it in your local m2 repo."
-  []
-  (comp
-   (aot :namespace '#{slacker.client slacker.converters})
-   (pom :project 'emiln/slacker
-        :version "1.0.0")
-   (jar)
-   (install)))
+  (merge-env! :source-paths #{"unit-tests"})
+  (require 'adzerk.boot-test)
+  ((resolve 'adzerk.boot-test/test)))
