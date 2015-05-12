@@ -9,10 +9,9 @@ machine:
 ## Download and install Boot
 dependencies:
   pre:
-    - wget "https://github.com/boot-clj/boot/releases/download/${BOOT_VERSION}/boot.sh"
-    - chmod u+x boot.sh
-    - mv boot.sh boot
-    - export PATH=$PATH:.
+    - wget -O boot "https://github.com/boot-clj/boot/releases/download/${BOOT_VERSION}/boot.sh"
+    - chmod a+x boot
+    - mv boot /usr/bin/boot
 
 ## Run the Slacker tests
 test:
