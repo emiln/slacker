@@ -9,7 +9,7 @@ machine:
 ## Download and install Boot
 dependencies:
   pre:
-    - wget -O ~/boot "https://github.com/boot-clj/boot/releases/download/${BOOT_VERSION}/boot.sh"
+    - wget -O ~/boot/boot "https://github.com/boot-clj/boot/releases/download/${BOOT_VERSION}/boot.sh"
     - chmod u+x "~/boot/boot"
   cache_directories:
     - "~/boot"
