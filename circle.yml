@@ -17,4 +17,4 @@ dependencies:
 ## Run the Slacker tests
 test:
   override:
-    - "boot.sh slacker-test"
+    - "boot slacker-test"
