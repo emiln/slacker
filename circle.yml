@@ -5,7 +5,7 @@ machine:
   environment:
     BOOT_CLOJURE_VERSION: 1.6.0
     BOOT_VERSION: 2.0.0-rc14
-    JAVA_OPTS: -XXMaxPermSize=512M
+    JAVA_OPTS: "-Xms256m -Xmx512m -XX:MaxPermSize=512m"
 
 ## Download and install Boot
 dependencies:
