@@ -8,6 +8,12 @@
     [org.clojure/data.json "0.2.5"]
     [stylefruits/gniazdo "0.3.1"]])
 
+(require '[adzerk.bootlaces :refer :all])
+
+(def +version+ "1.1.0")
+
+(bootlaces! +version+)
+
 (task-options!
   pom {:project 'emiln/slacker
        :version "1.0.0"
@@ -21,11 +27,3 @@
   (merge-env! :source-paths #{"unit-tests"})
   (require 'adzerk.boot-test)
   ((resolve 'adzerk.boot-test/test)))
-
-(deftask slacker-publish
-  "Publish a version of Slacker to Clojars."
-  [v version VAL str]
-  (when (re-find #"\d+\.\d+\.\d+")
-    (require 'adzerk.bootlaces)
-    ((resolve 'adzerk.bootlaces.bootlaces!))
-    ((resolve 'adzerk.bootlaces.push-release))))
