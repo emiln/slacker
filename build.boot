@@ -16,7 +16,7 @@
 
 (task-options!
   pom {:project 'emiln/slacker
-       :version "1.0.0"
+       :version "1.1.0"
        :description "An enthusiastically asynchronous Slack bot library."
        :url "https://github.com/emiln/slacker"
        :scm {:url "https://github.com/emiln/slacker"}})
