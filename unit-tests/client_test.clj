@@ -23,4 +23,12 @@
         (handle :with-arguments
           (fn [a b c] (deliver result [a b c])))
         (emit! :with-arguments "string" 12345 object)
-        (is (= ["string" 12345 object] @result))))))
+        (is (= ["string" 12345 object] @result))))
+
+    (testing "One failing handler should not kill other handlers"
+      (let [promises (into [] (repeatedly 100 promise))]
+        (handle :danger (fn [a])) ; clojure.lang.ArityException
+        (dotimes [i 100]
+          (handle :danger #(deliver (get promises i) true)))
+        (emit! :danger)
+        (is (every? true? (map deref promises)))))))

@@ -30,7 +30,9 @@
      (sub publication topic c)
      (go-loop []
        (when-let [[topic & msg] (<! c)]
-         (apply handler-fn msg)
+         (try
+           (apply handler-fn msg)
+           (catch Throwable t))
          (recur)))))
   ([topic handler-fn]
    (handle topic "I'm too lazy to describe my handlers." handler-fn)))
