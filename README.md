@@ -490,3 +490,28 @@ Name | Arguments | Description
 --- | --- | ---
 `:slacker.client/websocket-connected` | `url`, `socket` | Logs the URL that was successfully connected to and the open websocket.
 `:slacker.client/bot-connected` | `token` | Logs the token that was successfully connected to.
+
+## Logging
+
+Slacker uses [tools.logging](https://github.com/clojure/tools.logging) for all
+its internal logging. You should refer to this library about how to configure
+it, but it will work out-of-the-box by displaying important logging (of level
+`:info` or more severe) in `System.out`, and ignoring any logging of lesser
+importance.
+
+Slacker will:
+
+*   Log any call to `emit!` and `handle` with level `:debug`.
+*   Log any exception in handlers with level `:error`.
+
+This means you will have to actively change configuration to see debugging
+messages if you want this, but you will be notified of any exceptions happening
+in your asynchronous code.
+
+You probably want to set up proper logging using one of the loggers supported
+by [tools.logging](https://github.com/clojure/tools.logging):
+
+*   [slf4j](http://www.slf4j.org/)
+*   [Apache commons-logging](https://commons.apache.org/proper/commons-logging/)
+*   [log4j](http://logging.apache.org/log4j/2.x/)
+*   [java.util.logging](http://docs.oracle.com/javase/8/docs/api/index.html?java/util/logging/package-summary.html)
