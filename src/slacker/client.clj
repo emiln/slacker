@@ -5,6 +5,7 @@
     [clojure.core.async :refer [<! >! chan go go-loop pub sub]]
     [clojure.data.json :refer [read-str]]
     [clojure.string :refer [lower-case]]
+    [clojure.tools.logging :as log]
     [org.httpkit.client :as http]
     [gniazdo.core :refer [connect send-msg]]
     [slacker.converters :refer [string->keyword string->slack-json]]))
@@ -17,6 +18,7 @@
   "Emits an event to handlers. It will find all handlers registered for the
   topic and call them with the additional arguments if any."
   [topic & args]
+  (log/debugf "Emit: topic=[%s], ns=[%s], msg=[%s]" topic *ns* args)
   (go (>! publisher (apply vector topic args)))
   nil)
 
@@ -31,8 +33,14 @@
      (go-loop []
        (when-let [[topic & msg] (<! c)]
          (try
+           (log/debugf "Handle: topic=[%s], ns=[%s], msg=[%s]" topic *ns* msg)
            (apply handler-fn msg)
-           (catch Throwable t))
+           (catch Throwable t
+             (->> t
+               clojure.stacktrace/print-stack-trace
+               with-out-str
+               (log/errorf "Error in ns=[%s], handler=[%s]:\n%s"
+                           *ns* handler-fn))))
          (recur)))))
   ([topic handler-fn]
    (handle topic "I'm too lazy to describe my handlers." handler-fn)))
