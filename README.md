@@ -4,6 +4,8 @@
 
 [ ![Circle CI status for emiln/slacker](https://circleci.com/gh/emiln/slacker/tree/master.svg?style=badge)](https://circleci.com/gh/emiln/slacker)
 
+[ ![Clojars Project](http://clojars.org/emiln/slacker/latest-version.svg)](http://clojars.org/emiln/slacker)
+
 ## Introduction
 
 Slacker is an enthusiastically asynchronous library for interacting with
