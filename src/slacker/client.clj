@@ -19,9 +19,9 @@
   topic and call them with the additional arguments if any."
   [topic & args]
   (log/debugf "Emit: topic=[%s], ns=[%s], msg=[%s]" topic *ns* args)
-  (go (>! publisher (apply vector topic args)))
-  nil)
-
+  (let [return-chan (chan)]
+    (go (>! publisher (apply vector topic return-chan args)))
+    return-chan))
 
 (defn handle
   "Subscribes an event handler for the given topic. The handler will be called
@@ -31,10 +31,10 @@
    (let [c (chan)]
      (sub publication topic c)
      (go-loop []
-       (when-let [[topic & msg] (<! c)]
+       (when-let [[topic return-chan & msg] (<! c)]
          (try
            (log/debugf "Handle: topic=[%s], ns=[%s], msg=[%s]" topic *ns* msg)
-           (apply handler-fn msg)
+           (>! return-chan (apply handler-fn msg))
            (catch Throwable t
              (->> t
                clojure.stacktrace/print-stack-trace
