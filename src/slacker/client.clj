@@ -34,7 +34,8 @@
        (when-let [[topic return-chan & msg] (<! c)]
          (log/debugf "Handle: topic=[%s], ns=[%s], msg=[%s]" topic *ns* msg)
          (go (try
-               (>! return-chan (apply handler-fn msg))
+               (when-let [result (apply handler-fn msg)]
+                 (>! return-chan result))
                (catch Throwable t
                  (->> t
                    clojure.stacktrace/print-stack-trace
