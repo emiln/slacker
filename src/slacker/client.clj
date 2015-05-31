@@ -32,15 +32,15 @@
      (sub publication topic c)
      (go-loop []
        (when-let [[topic return-chan & msg] (<! c)]
-         (try
-           (log/debugf "Handle: topic=[%s], ns=[%s], msg=[%s]" topic *ns* msg)
-           (>! return-chan (apply handler-fn msg))
-           (catch Throwable t
-             (->> t
-               clojure.stacktrace/print-stack-trace
-               with-out-str
-               (log/errorf "Error in ns=[%s], handler=[%s]:\n%s"
-                           *ns* handler-fn))))
+         (log/debugf "Handle: topic=[%s], ns=[%s], msg=[%s]" topic *ns* msg)
+         (go (try
+               (>! return-chan (apply handler-fn msg))
+               (catch Throwable t
+                 (->> t
+                   clojure.stacktrace/print-stack-trace
+                   with-out-str
+                   (log/errorf "Error in ns=[%s], handler=[%s]:\n%s"
+                               *ns* handler-fn)))))
          (recur)))))
   ([topic handler-fn]
    (handle topic "I'm too lazy to describe my handlers." handler-fn)))
