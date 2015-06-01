@@ -14,13 +14,23 @@
 (def ^:private publication (pub publisher first))
 (def ^:private connection (atom nil))
 
+(defn- emit!-template
+  [return-chan topic args]
+  (log/debugf "Emit: topic=[%s], ns=[%s], msg=[%s]" topic *ns* args)
+  (go (>! publisher (apply vector topic return-chan args))))
+
 (defn emit!
   "Emits an event to handlers. It will find all handlers registered for the
   topic and call them with the additional arguments if any."
   [topic & args]
-  (log/debugf "Emit: topic=[%s], ns=[%s], msg=[%s]" topic *ns* args)
+  (emit!-template nil topic args))
+
+(defn emit-with-feedback!
+  "Emits an event to handlers. It will find all handlers registered for the
+  topic and call them with the additional arguments if any."
+  [topic & args]
   (let [return-chan (chan)]
-    (go (>! publisher (apply vector topic return-chan args)))
+    (emit!-template return-chan topic args)
     return-chan))
 
 (defn handle
@@ -35,7 +45,8 @@
          (log/debugf "Handle: topic=[%s], ns=[%s], msg=[%s]" topic *ns* msg)
          (go (try
                (when-let [result (apply handler-fn msg)]
-                 (>! return-chan result))
+                 (when return-chan
+                   (>! return-chan result)))
                (catch Throwable t
                  (->> t
                    clojure.stacktrace/print-stack-trace

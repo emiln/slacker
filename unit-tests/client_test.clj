@@ -3,10 +3,11 @@
             [clojure.test :refer [deftest is testing]]
             [clojure.tools.logging :refer [*logger-factory*]]
             [clojure.tools.logging.impl :refer [disabled-logger-factory]]
-            [slacker.client :refer [emit! handle]]))
+            [slacker.client :refer [emit! emit-with-feedback! handle]]))
 
 (deftest about-emit!
   (testing "Facts about emit!"
+
     (testing "Calling emit! should trigger a handler for the topic"
       (let [result (promise)
             handler (handle :test #(deliver result true))]
@@ -36,28 +37,32 @@
           (dotimes [i 100]
             (handle :danger #(deliver (get promises i) true)))
           (emit! :danger)
-          (is (every? true? (map deref promises))))))
+          (is (every? true? (map deref promises)))))))
 
-    (testing "Emit! should return a channel onto which the result of calling
-             the handler with the args is put."
+  (testing "Facts about emit-with-feedback!"
+
+    (testing "Emit-with-feedback! should return a channel onto which the result
+             of calling the handler with the args is put."
       (handle :add +)
-      (is (= 6 (<!! (emit! :add 1 2 3)))))
+      (is (= 6 (<!! (emit-with-feedback! :add 1 2 3)))))
 
     (testing "Multiple handlers should result in multiple values being put onto
-             the return channel of a call to emit!"
+             the return channel of a call to emit-with-feedback!"
       (handle :arith +)
       (handle :arith *)
       (handle :arith -)
-      (let [return (emit! :arith 5 10)
+      (let [return (emit-with-feedback! :arith 5 10)
             values (repeatedly 3 #(<!! return))]
         (is (= #{-5 15 50} (apply hash-set values)))))
 
-    (testing "All return channels from multiple calls to emit! should receive a
-             result from the handler."
+    (testing "All return channels from multiple calls to emit-with-feedback!
+             should receive a result from the handler."
       (handle :add +)
-      (let [[c1 c2 c3] [(emit! :add 1 2) (emit! :add 2 3) (emit! :add 3 4)]
-            return-1 (<!! c1)
-            return-2 (<!! c2)
-            return-3 (<!! c3)]
+      (let [chan1 (emit-with-feedback! :add 1 2)
+            chan2 (emit-with-feedback! :add 2 3)
+            chan3 (emit-with-feedback! :add 3 4)
+            return-1 (<!! chan1)
+            return-2 (<!! chan2)
+            return-3 (<!! chan3)]
         (is (= #{3 5 7}
                (hash-set return-1 return-2 return-3)))))))
