@@ -14,14 +14,24 @@
 (def ^:private publication (pub publisher first))
 (def ^:private connection (atom nil))
 
+(defn- emit!-template
+  [return-chan topic args]
+  (log/debugf "Emit: topic=[%s], ns=[%s], msg=[%s]" topic *ns* args)
+  (go (>! publisher (apply vector topic return-chan args))))
+
 (defn emit!
   "Emits an event to handlers. It will find all handlers registered for the
   topic and call them with the additional arguments if any."
   [topic & args]
-  (log/debugf "Emit: topic=[%s], ns=[%s], msg=[%s]" topic *ns* args)
-  (go (>! publisher (apply vector topic args)))
-  nil)
+  (emit!-template nil topic args))
 
+(defn emit-with-feedback!
+  "Emits an event to handlers. It will find all handlers registered for the
+  topic and call them with the additional arguments if any."
+  [topic & args]
+  (let [return-chan (chan)]
+    (emit!-template return-chan topic args)
+    return-chan))
 
 (defn handle
   "Subscribes an event handler for the given topic. The handler will be called
@@ -31,16 +41,18 @@
    (let [c (chan)]
      (sub publication topic c)
      (go-loop []
-       (when-let [[topic & msg] (<! c)]
-         (try
-           (log/debugf "Handle: topic=[%s], ns=[%s], msg=[%s]" topic *ns* msg)
-           (apply handler-fn msg)
-           (catch Throwable t
-             (->> t
-               clojure.stacktrace/print-stack-trace
-               with-out-str
-               (log/errorf "Error in ns=[%s], handler=[%s]:\n%s"
-                           *ns* handler-fn))))
+       (when-let [[topic return-chan & msg] (<! c)]
+         (log/debugf "Handle: topic=[%s], ns=[%s], msg=[%s]" topic *ns* msg)
+         (go (try
+               (when-let [result (apply handler-fn msg)]
+                 (when return-chan
+                   (>! return-chan result)))
+               (catch Throwable t
+                 (->> t
+                   clojure.stacktrace/print-stack-trace
+                   with-out-str
+                   (log/errorf "Error in ns=[%s], handler=[%s]:\n%s"
+                               *ns* handler-fn)))))
          (recur)))))
   ([topic handler-fn]
    (handle topic "I'm too lazy to describe my handlers." handler-fn)))
