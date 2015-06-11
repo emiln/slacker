@@ -11,13 +11,13 @@
 
 (require '[adzerk.bootlaces :refer :all])
 
-(def +version+ "1.2.0")
+(def +version+ "1.3.0")
 
 (bootlaces! +version+)
 
 (task-options!
   pom {:project 'emiln/slacker
-       :version "1.2.0"
+       :version "1.3.0"
        :description "An enthusiastically asynchronous Slack bot library."
        :url "https://github.com/emiln/slacker"
        :scm {:url "https://github.com/emiln/slacker"}})
