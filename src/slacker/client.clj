@@ -86,7 +86,15 @@
                    :on-receive
                    (fn [raw]
                      (emit! ::receive-message
-                       (read-str raw :key-fn string->keyword))))]
+                       (read-str raw :key-fn string->keyword)))
+                   :on-error
+                   (fn [& args]
+                     (log/error "Error in websocket.")
+                     (emit! ::websocket-erred args))
+                   :on-close
+                   (fn [& args]
+                     (log/warn "Closed websocket.")
+                     (emit! ::websocket-closed args)))]
       (reset! connection socket)
       (emit! ::websocket-connected url socket)
       (emit! ::bot-connected token))))
