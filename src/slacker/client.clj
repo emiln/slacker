@@ -90,7 +90,7 @@
                    :on-error
                    (fn [& args]
                      (log/error "Error in websocket.")
-                     (emit! ::websocket-errored args))
+                     (emit! ::websocket-erred args))
                    :on-close
                    (fn [& args]
                      (log/warn "Closed websocket.")
