@@ -37,7 +37,10 @@
           (dotimes [i 100]
             (handle :danger #(deliver (get promises i) true)))
           (emit! :danger)
-          (is (every? true? (map deref promises)))))))
+          (is (every? true? (map deref promises))))))
+
+    (testing "Calling emit! should return nil"
+      (is (= nil (emit! :nil "some arg")))))
 
   (testing "Facts about emit-with-feedback!"
 
