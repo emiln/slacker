@@ -23,7 +23,8 @@
   "Emits an event to handlers. It will find all handlers registered for the
   topic and call them with the additional arguments if any."
   [topic & args]
-  (emit!-template nil topic args))
+  (emit!-template nil topic args)
+  nil)
 
 (defn emit-with-feedback!
   "Emits an event to handlers. It will find all handlers registered for the
