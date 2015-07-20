@@ -60,17 +60,3 @@
 
 (def refresh-users
   (refresh-cache users))
-
-;; +--------------------------------------------------------------------------+
-;; | Populate/refresh                                                         |
-;; +--------------------------------------------------------------------------+
-
-(handle :channel-created refresh-channels)
-(handle :channel-deleted refresh-channels)
-(handle :channel-rename refresh-channels)
-(handle :user-change refresh-users)
-(handle :team-join refresh-users)
-(handle :slacker.client/bot-connected #(do (refresh-channels) (refresh-users)))
-
-(handle :slacker.client/connect-bot
-  (partial reset! token conj))
