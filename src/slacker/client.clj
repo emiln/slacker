@@ -75,14 +75,15 @@
   command called ::connect-websocket commanding that a connection be made to
   the URL."
   [token]
-  (emit! ::connect-websocket
-    token
-    (-> (format "https://slack.com/api/rtm.start?token=%s" token)
-      (http/get)
-      (deref)
-      (:body)
-      (read-str :key-fn string->keyword)
-      (:url))))
+  (let [url (some-> (format "https://slack.com/api/rtm.start?token=%s" token)
+              (http/get)
+              (deref)
+              (:body)
+              (read-str :key-fn string->keyword)
+              (:url))]
+    (if url
+      (emit! ::connect-websocket token url)
+      (log/errorf "Failed connecting bot with token '%s'." token))))
 
 (handle ::connect-bot connect-bot)
 
