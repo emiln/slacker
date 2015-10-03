@@ -2,7 +2,7 @@
   "A simple Slack bot following an emit/handle flow. Read more about it in the
   README."
   (:require
-    [clojure.core.async :refer [<! >! chan go go-loop pub sub]]
+    [clojure.core.async :refer [<! <!! >! chan go go-loop pub sub]]
     [clojure.data.json :refer [read-str]]
     [clojure.stacktrace :refer [print-stack-trace]]
     [clojure.string :refer [lower-case]]
@@ -14,6 +14,15 @@
 (def ^:private publisher (chan))
 (def ^:private publication (pub publisher first))
 (def ^:private connection (atom nil))
+
+(defn await!
+  "Blocks the thread, awaiting the occurrence of the given topic on the event
+  channel. This is very handy for awaiting :slacker.client/bot-disconnected in
+  the main function, which essentially blocks until the bot dies."
+  [topic]
+  (let [c (chan)]
+    (sub publication topic c)
+    (<!! c)))
 
 (defn- emit!-template
   [return-chan topic args]
@@ -102,11 +111,13 @@
                  :on-error
                  (fn [& args]
                    (log/error "Error in websocket.")
-                   (emit! ::websocket-erred args))
+                   (emit! ::websocket-erred args)
+                   (emit! ::bot-disconnected))
                  :on-close
                  (fn [& args]
                    (log/warn "Closed websocket.")
-                   (emit! ::websocket-closed args)))]
+                   (emit! ::websocket-closed args)
+                   (emit! ::bot-disconnected)))]
     (reset! connection socket)
     (emit! ::websocket-connected url socket)
     (emit! ::bot-connected token)))
