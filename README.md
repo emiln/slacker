@@ -186,7 +186,7 @@ message we'll be responding to along with the actual text of the message.
 The last step is to register `reprimand-profanity` as a handler for general
 `:message` events.
 
-`(slacker.client/handle :message report-profanity)`
+`(slacker.client/handle :message reprimand-profanity)`
 
 That's it. The bot will now respond to profane utterances with a simple, static
 reprimand.
