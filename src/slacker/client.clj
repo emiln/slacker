@@ -136,8 +136,10 @@
   [msg]
   (let [topic (cond (:type msg)     (:type msg)
                     (:reply_to msg) "reply"
-                    :else           "unknown")]
-    (go (>! publisher [(string->keyword topic) msg]))))
+                    :else           "unknown")
+        channel (cond (:channel msg) (:channel msg)
+                      :else nil)]
+    (go (>! publisher [(string->keyword topic) channel msg]))))
 
 (handle ::receive-message receive-message)
 
