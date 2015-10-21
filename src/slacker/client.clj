@@ -2,7 +2,7 @@
   "A simple Slack bot following an emit/handle flow. Read more about it in the
   README."
   (:require
-    [clojure.core.async :refer [<! <!! >! chan go go-loop pub sub]]
+    [clojure.core.async :refer [alts!! <! <!! >! chan go go-loop pub sub timeout]]
     [clojure.data.json :refer [read-str]]
     [clojure.stacktrace :refer [print-stack-trace]]
     [clojure.string :refer [lower-case]]
@@ -19,10 +19,12 @@
   "Blocks the thread, awaiting the occurrence of the given topic on the event
   channel. This is very handy for awaiting :slacker.client/bot-disconnected in
   the main function, which essentially blocks until the bot dies."
-  [topic]
+  [topic & [time-out]]
   (let [c (chan)]
     (sub publication topic c)
-    (<!! c)))
+    (if time-out
+      (first (alts!! [c (timeout time-out)]))
+      (<!! c))))
 
 (defn- emit!-template
   [return-chan topic args]

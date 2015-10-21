@@ -3,8 +3,8 @@ machine:
 
   # Pin the Boot and Clojure version
   environment:
-    BOOT_CLOJURE_VERSION: 1.6.0
-    BOOT_VERSION: 2.0.0-rc14
+    BOOT_CLOJURE_VERSION: 1.7.0
+    BOOT_VERSION: 2.3.0
     JAVA_OPTS: -XXMaxPermSize=256m
 
 ## Download and install Boot
@@ -21,4 +21,4 @@ dependencies:
 ## Run the Slacker tests
 test:
   override:
-    - "boot slacker-test"
+    - "boot tests"
