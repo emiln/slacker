@@ -7,7 +7,8 @@
     [org.clojure/core.async "0.1.346.0-17112a-alpha"]
     [org.clojure/data.json "0.2.6"]
     [org.clojure/tools.logging "0.3.1"]
-    [stylefruits/gniazdo "0.4.0"]])
+    [stylefruits/gniazdo "0.4.0"]
+    [environ "1.0.1"]])
 
 (require '[adzerk.bootlaces :refer :all])
 
@@ -22,9 +23,24 @@
        :url "https://github.com/emiln/slacker"
        :scm {:url "https://github.com/emiln/slacker"}})
 
-(deftask slacker-test
+(deftask unit-tests
   "Run the unit tests for Slacker in a pod."
   []
   (merge-env! :source-paths #{"unit-tests"})
   (require 'adzerk.boot-test)
   ((resolve 'adzerk.boot-test/test)))
+
+(deftask smoke-tests
+  "Run the smoke tests for Slacker in a pod."
+  []
+  (merge-env! :source-paths #{"smoke-tests"})
+  (require 'adzerk.boot-test)
+  ((resolve 'adzerk.boot-test/test)))
+
+(deftask tests
+  "Run the full test suite for Slacker in a pod."
+  []
+  (merge-env! :source-paths #{"unit-tests" "smoke-tests"})
+  (require 'adzerk.boot-test)
+  ((resolve 'adzerk.boot-test/test)))
+
