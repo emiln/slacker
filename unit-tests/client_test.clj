@@ -40,8 +40,9 @@
           (is (every? true? (map deref promises))))))
 
     (testing "Calling emit! should return nil"
-      (is (= nil (emit! :nil "some arg")))))
+      (is (= nil (emit! :nil "some arg"))))))
 
+(deftest about-emit-with-feedback!
   (testing "Facts about emit-with-feedback!"
 
     (testing "Emit-with-feedback! should return a channel onto which the result
@@ -69,3 +70,29 @@
             return-3 (<!! chan3)]
         (is (= #{3 5 7}
                (hash-set return-1 return-2 return-3)))))))
+
+(deftest about-error-emissions
+  (testing "Facts about error emissions"
+
+    (testing "Connect-bot should emit ::connect-bot-failed when it gets no HTTP
+             response from Slack."
+      (let [error (promise)
+            mock (fn [_ f] (f {:error "Failed"}))
+            handler (partial deliver error)]
+        (with-redefs-fn {#'org.httpkit.client/get mock}
+          (fn [& _]
+            (handle :slacker.client/connect-bot-error handler)
+            (emit! :slacker.client/connect-bot "test")
+            (is @error)))))
+
+    (testing "Connect-bot should emit ::connect-bot-failed when it gets a Slack
+             error."
+      (let [error (promise)
+            body "{\"error\":\"failed\"}"
+            mock (fn [_ f] (f {:status 200 :body body}))
+            handler (partial deliver error)]
+        (with-redefs-fn {#'org.httpkit.client/get mock}
+          (fn [& _]
+            (handle :slacker.client/connect-bot-error handler)
+            (emit! :slacker.client/connect-bot "test")
+            (is @error)))))))
