@@ -1,0 +1,34 @@
+image: java:openjdk-8-jre
+
+variables:
+    BOOT_BIN_DIR: "~/bootdir"
+    BOOT_BIN: "${BOOT_BIN_DIR}/boot"
+    BOOT_AS_ROOT: "yes"
+    BOOT_CLOJURE_VERSION: "1.7.0"
+    BOOT_VERSION: "2.3.0"
+
+stages:
+    - boot_setup
+    - tests
+
+boot_setup_job:
+    stage: boot_setup
+    script:
+        - mkdir -p ${BOOT_BIN_DIR}
+        - wget -O ${BOOT_BIN} "https://github.com/boot-clj/boot/releases/download/${BOOT_VERSION}/boot.sh"
+        - chmod a+x ${BOOT_BIN}
+        - ${BOOT_BIN} checkout
+    artifacts:
+        paths:
+            - ${BOOT_BIN_DIR}
+            - ~/m2
+
+unit_tests_job:
+    stage: tests
+    script:
+        - ${BOOT_BIN} unit-tests
+
+smoke_tests_job:
+    stage: tests
+    script:
+        - ${BOOT_BIN} smoke-tests
