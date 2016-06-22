@@ -84,17 +84,21 @@
 (defn connect-bot
   "Retrieves the websocket URL for a given bot token and emits this token in a
   command called ::connect-websocket commanding that a connection be made to
-  the URL."
+  the URL.
+
+  Any error encountered in communicating with Slack is emitted with the topic
+  ::connect-bot-error."
   [token]
-  (let [url (some-> (format "https://slack.com/api/rtm.start?token=%s" token)
-              (http/get)
-              (deref)
-              (:body)
-              (read-str :key-fn string->keyword)
-              (:url))]
-    (if url
-      (emit! ::connect-websocket token url)
-      (log/errorf "Failed connecting bot with token '%s'." token))))
+  (http/get
+    (format "https://slack.com/api/rtm.start?token=%s" token)
+    (fn [{:keys [status body error]}]
+      (if-let [payload (read-str (or body "{}") :key-fn string->keyword)]
+        (if-let [url (:url payload)]
+          (emit! ::connect-websocket token url)
+          (emit! ::connect-bot-error (:error payload "unknown_error")))
+        (emit! ::connect-bot-error
+               {:status status
+                :error error})))))
 
 (handle ::connect-bot connect-bot)
 
